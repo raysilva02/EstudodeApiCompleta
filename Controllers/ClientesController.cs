@@ -24,21 +24,21 @@ namespace EstudoApiCompleta.Controllers
         [HttpGet]
         public async Task<ActionResult<IEnumerable<Cliente>>> GetClientes()
         {
-            return await _context.Clientes.ToListAsync();
+            return await _context.Clientes.FromSqlRaw("SELECT * FROM Clientes").ToListAsync();
         }
 
         // GET: api/Clientes/5
         [HttpGet("{id}")]
         public async Task<ActionResult<Cliente>> GetCliente(Guid id)
         {
-            var cliente = await _context.Clientes.FindAsync(id);
+            var cliente = await _context.Clientes.FromSqlInterpolated($"SELECT * FROM Clientes WHERE Id = {id}").ToListAsync();
 
             if (cliente == null)
             {
                 return NotFound();
             }
 
-            return cliente;
+            return Ok(cliente);
         }
 
         // PUT: api/Clientes/5
@@ -51,13 +51,10 @@ namespace EstudoApiCompleta.Controllers
                 return BadRequest();
             }
 
-            _context.Entry(cliente).State = EntityState.Modified;
+            var affectedRows = await _context.Database.ExecuteSqlInterpolatedAsync(
+                $"UPDATE Clientes SET Nome = {cliente.Nome}, TipoCliente = {cliente.TipoCliente}, Ativo = {cliente.Ativo} WHERE Id = {id}");
 
-            try
-            {
-                await _context.SaveChangesAsync();
-            }
-            catch (DbUpdateConcurrencyException)
+            if (affectedRows == 0)
             {
                 if (!ClienteExists(id))
                 {
@@ -65,7 +62,7 @@ namespace EstudoApiCompleta.Controllers
                 }
                 else
                 {
-                    throw;
+                    throw new DbUpdateConcurrencyException();
                 }
             }
 
@@ -77,8 +74,12 @@ namespace EstudoApiCompleta.Controllers
         [HttpPost]
         public async Task<ActionResult<Cliente>> PostCliente(Cliente cliente)
         {
-            _context.Clientes.Add(cliente);
-            await _context.SaveChangesAsync();
+            if (cliente.Id == Guid.Empty)
+            {
+                cliente.Id = Guid.NewGuid();
+            }
+            await _context.Database.ExecuteSqlInterpolatedAsync(
+                $"INSERT INTO Clientes (Id, Nome, TipoCliente, Ativo) VALUES ({cliente.Id}, {cliente.Nome}, {cliente.TipoCliente}, {cliente.Ativo})");
 
             return CreatedAtAction("GetCliente", new { id = cliente.Id }, cliente);
         }
@@ -93,8 +94,8 @@ namespace EstudoApiCompleta.Controllers
                 return NotFound();
             }
 
-            _context.Clientes.Remove(cliente);
-            await _context.SaveChangesAsync();
+            await _context.Database.ExecuteSqlInterpolatedAsync(
+                 $"DELETE FROM Clientes WHERE Id = {id}");
 
             return NoContent();
         }

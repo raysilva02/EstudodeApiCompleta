@@ -52,7 +52,7 @@ namespace EstudoApiCompleta.Controllers
             }
 
             var affectedRows = await _context.Database.ExecuteSqlInterpolatedAsync(
-                $"UPDATE Clientes SET Nome = {cliente.Nome}, TipoCliente = {cliente.TipoCliente}, Ativo = {cliente.Ativo} WHERE Id = {id}");
+                $"UPDATE Clientes SET Nome = {cliente.Nome}, TipoCliente = {cliente.TipoCliente}, Ativo = {cliente.Ativo}, UsuarioId = {cliente.UsuarioId} WHERE Id = {id}");
 
             if (affectedRows == 0)
             {
@@ -79,7 +79,7 @@ namespace EstudoApiCompleta.Controllers
                 cliente.Id = Guid.NewGuid();
             }
             await _context.Database.ExecuteSqlInterpolatedAsync(
-                $"INSERT INTO Clientes (Id, Nome, TipoCliente, Ativo) VALUES ({cliente.Id}, {cliente.Nome}, {cliente.TipoCliente}, {cliente.Ativo})");
+                $"INSERT INTO Clientes (Id, Nome, TipoCliente, Ativo, UsuarioId) VALUES ({cliente.Id}, {cliente.Nome}, {cliente.TipoCliente}, {cliente.Ativo}, {cliente.UsuarioId})");
 
             return CreatedAtAction("GetCliente", new { id = cliente.Id }, cliente);
         }

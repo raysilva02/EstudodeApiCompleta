@@ -16,5 +16,7 @@ namespace EstudoApiCompleta.Model
 
         public bool Ativo { get; set; }
 
+        public Guid UsuarioId { get; set; }
+
     }
 }
